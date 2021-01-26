@@ -4,6 +4,8 @@
 git pull https://github.com/dylanlevine/HCP-Classification.git/  
 
 
-pip install pandas, numpy, sci-kit learn
+pip install pandas, numpy, scikit-learn, jupyterlab (or pip install requirements.txt)
+
+
 
 
