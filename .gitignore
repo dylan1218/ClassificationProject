@@ -1,0 +1,25 @@
+#standard venvs
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+#venv created
+VirtualModules/
+**/VirtualModules/
+
+#vscode settings
+**/.vscode/
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/
