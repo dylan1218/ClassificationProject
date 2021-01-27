@@ -38,6 +38,7 @@ The second approach will perform better with supervised learning.
 #Consider automated model retraining
 #https://www.inawisdom.com/machine-learning/machine-learning-automated-model-retraining-sagemaker/
 
+#Webapp for predictions on model?
 
 #Add a final method that removes the ORIGINAL (unformated features) and returns a numpy array which can
 #be passed to an ML model 
