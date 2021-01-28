@@ -53,6 +53,11 @@ The second approach will perform better with supervised learning.
 #1 initialize FunctionFeaturizer with df and transform method
 
 #Add a method for feature hasing
+
+#to add some kind of pickling object or pickling method so that the objects can be carried over for production. Untill we do that
+#we can only use these methods for testing.
+
+
 class FunctionFeaturizer:
 
     def __init__(self, df):
@@ -60,6 +65,7 @@ class FunctionFeaturizer:
         self.dfscaled = None #val gets set if outputFeatures method is called
         self.originalFeatures = df.columns.tolist()
         self.labelEncodeObj = LabelEncoder()
+
 
     def concatVector(self, textSeries, ngramMin = 1, ngramMax = 1):
         '''
@@ -81,7 +87,8 @@ class FunctionFeaturizer:
         '''
         Returns labels encoded as integers
         Required param labelSeries takes a string of the label field name from df.
-        Note: utilize label encoded for encoding where order does not matter 
+        Note: utilize label encoded for encoding where order does not matter.
+        Note: method only takes one column at a time
         '''
         #how to implement one hot encoding vs. label encode? https://datascience.stackexchange.com/questions/9443/when-to-use-one-hot-encoding-vs-labelencoder-vs-dictvectorizor
         #https://datascience.stackexchange.com/questions/39317/difference-between-ordinalencoder-and-labelencoder/64177
@@ -97,7 +104,7 @@ class FunctionFeaturizer:
         Returns labels encoded in one-hot format (i.e. one feature per label)
         Leverages the pandas get_dummies method. 
         '''
-        self.df = pd.get_dummies(self.df, columns=[labelSeries])
+        self.df = pd.get_dummies(self.df, columns=labelSeries)
         return
     
     #To add an optional param that will allow you to keep certain original features
