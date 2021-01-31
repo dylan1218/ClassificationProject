@@ -57,6 +57,10 @@ The second approach will perform better with supervised learning.
 #to add some kind of pickling object or pickling method so that the objects can be carried over for production. Untill we do that
 #we can only use these methods for testing.
 
+#for datetime feature need to transform day of week/month into a
+# a transformation based off of cos and sin function mapped to a circle, where cos = x val, and sin = y val.
+# http://blog.davidkaleko.com/feature-engineering-cyclical-features.html
+# https://datascience.stackexchange.com/questions/5990/what-is-a-good-way-to-transform-cyclic-ordinal-attributes
 
 class FunctionFeaturizer:
 
@@ -65,6 +69,7 @@ class FunctionFeaturizer:
         self.dfscaled = None #val gets set if outputFeatures method is called
         self.originalFeatures = df.columns.tolist()
         self.labelEncodeObj = LabelEncoder()
+        self.transformDict = {} #holds transformation objects to save for later use
 
 
     def concatVector(self, textSeries, ngramMin = 1, ngramMax = 1):
@@ -110,13 +115,42 @@ class FunctionFeaturizer:
     #To add an optional param that will allow you to keep certain original features
     def outputFeatures(self):
         '''
-        Returns only transformed features and excludes original untransformed features
+        Returns only transformed features and excludes original untransformed features.
+        Can be used to quickly obtain all engineered features.
         '''
         self.dfscaled = self.df[self.df.columns.difference(self.originalFeatures)]
         #outputDf = self.df[self.df.columns.difference(self.originalFeatures)]
         #return outputDf        
         return
+    
+    def transformDateTime(self, LabelSeries, type):
+        '''
+        Returns pairs of sin and cos transformed values from a given datetime series field.
+        The field must be passed as a datetime
+        A pair of sin/cos features is created for each of year/month/day
+        Type paramater takes either "hours", "days", or "months".
+        Note that this feature will not work well with decision tree type of models as 
+        these models do not consider cross-feature, and consider one feature at a time.
+        '''
+        #Hours transform
+        if type == 'Hours':
+            self.df['hour_sin'] = np.sin(self.df[LabelSeries].dt.hour*(2.*np.pi/24))
+            self.df['hour_cos'] = np.cos(self.df[LabelSEries].dt.hour*(2.*np.pi/24))
+
+        #Days transform
+        if type == 'Days':    
+            self.df['day_sin'] = np.sin(self.df[LabelSeries].dt.dayofweek*(2.*np.pi/7))
+            self.df['day_cos'] = np.cos(self.df[LabelSEries].dt.dayofweek*(2.*np.pi/7))
+
+
+        #Months transform
+        if type == 'months':
+            self.df['month_sin'] = np.sin(self.df[LabelSeries].dt.hour*(2.*np.pi/12))
+            self.df['month_cos'] = np.cos(self.df[LabelSEries].dt.hour*(2.*np.pi/12))            
+        
+        return
   
+   
     #To add a fillna method that takes different statistic paramaters as inputt to method fillnastat(median/mode/mean)
 
 #https://www.codecademy.com/forum_questions/560afacd86f552c8a70001dd
