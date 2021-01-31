@@ -136,18 +136,18 @@ class FunctionFeaturizer:
         #Hours transform
         if type == 'Hours':
             self.df['hour_sin'] = np.sin(self.df[LabelSeries].dt.hour*(2.*np.pi/24))
-            self.df['hour_cos'] = np.cos(self.df[LabelSEries].dt.hour*(2.*np.pi/24))
+            self.df['hour_cos'] = np.cos(self.df[LabelSeries].dt.hour*(2.*np.pi/24))
 
         #Days transform
         if type == 'Days':    
             self.df['day_sin'] = np.sin(self.df[LabelSeries].dt.dayofweek*(2.*np.pi/7))
-            self.df['day_cos'] = np.cos(self.df[LabelSEries].dt.dayofweek*(2.*np.pi/7))
+            self.df['day_cos'] = np.cos(self.df[LabelSeries].dt.dayofweek*(2.*np.pi/7))
 
 
         #Months transform
         if type == 'months':
-            self.df['month_sin'] = np.sin(self.df[LabelSeries].dt.hour*(2.*np.pi/12))
-            self.df['month_cos'] = np.cos(self.df[LabelSEries].dt.hour*(2.*np.pi/12))            
+            self.df['month_sin'] = np.sin(self.df[LabelSeries].dt.month*(2.*np.pi/12))
+            self.df['month_cos'] = np.cos(self.df[LabelSeries].dt.month*(2.*np.pi/12))            
         
         return
   
