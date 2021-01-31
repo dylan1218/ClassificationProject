@@ -72,7 +72,7 @@ class FunctionFeaturizer:
         self.transformDict = {} #holds transformation objects to save for later use
 
 
-    def concatVector(self, textSeries, ngramMin = 1, ngramMax = 1):
+    def concatVector(self, textSeries, ngramMin = 1, ngramMax = 1, min_df=0.10, max_df=0.90):
         '''
         Returns a matrix of token counts.
         Required param textSeries takes a string of the textfield name from df
@@ -81,12 +81,13 @@ class FunctionFeaturizer:
         '''
         #scikit learn CountVertorizer object
         #Note: to consider permutating certain paramaters in the CV object
-        cv = CountVectorizer(ngram_range=(ngramMin, ngramMax),stop_words='english')
+        cv = CountVectorizer(ngram_range=(ngramMin, ngramMax),stop_words='english', min_df=0.01, max_df=0.99)
         text_features = cv.fit_transform(self.df[textSeries].values)
         vect_df = pd.DataFrame(text_features.todense(), columns=cv.get_feature_names())
+        self.df = self.df.reset_index()
         dfConcat = pd.concat([self.df, vect_df], axis=1)
         self.df = dfConcat
-        return
+        return vect_df
     
     def encodeLabels(self, labelSeries):
         '''
