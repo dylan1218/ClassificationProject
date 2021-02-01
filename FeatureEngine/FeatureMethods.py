@@ -110,7 +110,10 @@ class FunctionFeaturizer:
         Returns labels encoded in one-hot format (i.e. one feature per label)
         Leverages the pandas get_dummies method. 
         '''
-        self.df = pd.get_dummies(self.df, columns=labelSeries)
+        self.df.reset_index()
+        self.df = pd.concat([self.df, pd.get_dummies(self.df[labelSeries])], axis=1)
+        self.df.reset_index()
+        #self.df = pd.get_dummies(self.df, columns=labelSeries, prefix="1h_")
         return
     
     #To add an optional param that will allow you to keep certain original features
