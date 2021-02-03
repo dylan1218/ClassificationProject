@@ -1,0 +1,40 @@
+2021-02-02 15:44:53,534 - teradata.udaexec - INFO - Initializing UdaExec...
+2021-02-02 15:44:53,535 - teradata.udaexec - INFO - Reading config files: ['c:\\etc\\udaexec.ini: Not Found', 'C:\\Users\\dylan.levine\\udaexec.ini: Not Found', 'c:\\Users\\dylan.levine\\Development\\HCP Classification\\HCP-Classification\\udaexec.ini: Not Found']
+2021-02-02 15:44:53,535 - teradata.udaexec - INFO - Found run number file: "c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\.runNumber"
+2021-02-02 15:44:53,535 - teradata.udaexec - INFO - Cleaning up log files older than 90 days.
+2021-02-02 15:44:53,535 - teradata.udaexec - INFO - Removed 0 log files.
+2021-02-02 15:44:53,822 - teradata.udaexec - INFO - Checkpoint file not found: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\HelloWorld.checkpoint
+2021-02-02 15:44:53,823 - teradata.udaexec - INFO - No previous checkpoint found, executing from beginning...
+2021-02-02 15:44:53,823 - teradata.udaexec - INFO - Execution Details:
+/********************************************************************************
+ * Application Name: HelloWorld
+ *          Version: 1.0
+ *       Run Number: 20210202154453-2
+ *             Host: AMUSORLLD308M63
+ *         Platform: Windows-10-10.0.18362-SP0
+ *          OS User: dylan.levine
+ *   Python Version: 3.6.12
+ *  Python Compiler: MSC v.1916 64 bit (AMD64)
+ *     Python Build: ('default', 'Sep  9 2020 00:29:25')
+ *  UdaExec Version: 15.10.0.21
+ *     Program Name: C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\ipykernel_launcher.py
+ *      Working Dir: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification
+ *      Git Version: git version 2.30.0.windows.2
+ *     Git Revision: 3791391
+ *        Git Dirty: True [ M Datasets/IFresults.csv, M Datasets/csvoutput.csv, M FeatureEngine/FeatureMethods.py, M FeatureEngine/__pycache__/FeatureMethods.cpython-36.pyc, M FeatureEngine/__pycache__/FeatureMethods.cpython-38.pyc, M "ModelsDL sup.ipynb", M ModelsDL_unsup.ipynb,?? .runNumber,?? logs/]
+ *          Log Dir: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs
+ *         Log File: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs\HelloWorld.20210202154453-2.log
+ *     Config Files: ['c:\\etc\\udaexec.ini: Not Found', 'C:\\Users\\dylan.levine\\udaexec.ini: Not Found', 'c:\\Users\\dylan.levine\\Development\\HCP Classification\\HCP-Classification\\udaexec.ini: Not Found']
+ *      Query Bands: ApplicationName=HelloWorld;Version=1.0;JobID=20210202154453-2;ClientUser=dylan.levine;Production=False;udaAppLogFile=c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs\HelloWorld.20210202154453-2.log;gitRevision=3791391;gitDirty=True;UtilityName=PyTd;UtilityVersion=15.10.0.21
+********************************************************************************/
+2021-02-02 15:44:53,823 - teradata.udaexec - INFO - Creating connection: {'method': 'odbc', 'system': 'EDWPROD.ONEABBOTT.COM', 'username': 'LEVINDM', 'password': 'XXXXXX'}
+2021-02-02 15:44:53,898 - teradata.tdodbc - INFO - Available drivers: SQL Server, Teradata Database ODBC Driver 16.20
+2021-02-02 15:44:58,751 - teradata.udaexec - ERROR - Unable to create connection: {'method': 'odbc', 'system': 'EDWPROD.ONEABBOTT.COM', 'username': 'LEVINDM', 'password': 'XXXXXX'}
+Traceback (most recent call last):
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\udaexec.py", line 183, in connect
+    **args))
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\tdodbc.py", line 454, in __init__
+    checkStatus(rc, hDbc=self.hDbc, method="SQLDriverConnectW")
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\tdodbc.py", line 231, in checkStatus
+    raise DatabaseError(i[2], u"[{}] {}".format(i[0], msg), i[0])
+teradata.api.DatabaseError: (210, '[28000] [Teradata][ODBC Teradata Driver][Teradata Database] (210) The UserId, Password or Account is invalid. FailCode = -8017')

@@ -5,6 +5,13 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+from collections import defaultdict
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.preprocessing import StandardScaler
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
 
 '''
 Two approaches:
@@ -62,6 +69,8 @@ The second approach will perform better with supervised learning.
 # http://blog.davidkaleko.com/feature-engineering-cyclical-features.html
 # https://datascience.stackexchange.com/questions/5990/what-is-a-good-way-to-transform-cyclic-ordinal-attributes
 
+
+
 class FunctionFeaturizer:
 
     def __init__(self, df):
@@ -96,8 +105,6 @@ class FunctionFeaturizer:
         Note: utilize label encoded for encoding where order does not matter.
         Note: method only takes one column at a time
         '''
-        #how to implement one hot encoding vs. label encode? https://datascience.stackexchange.com/questions/9443/when-to-use-one-hot-encoding-vs-labelencoder-vs-dictvectorizor
-        #https://datascience.stackexchange.com/questions/39317/difference-between-ordinalencoder-and-labelencoder/64177
         #Note: standard label encoding better for decision trees
         #labelEncodeObj = LabelEncoder()
         labels = self.labelEncodeObj.fit_transform(self.df[labelSeries])
@@ -184,6 +191,55 @@ class FeatureEngine(FunctionFeaturizer):
 
 
 
-    
+#Implementation of Principal Feature Analysis to help in identifying key features in an unsupervised learing context
+#https://stats.stackexchange.com/questions/108743/methods-in-r-or-python-to-perform-feature-selection-in-unsupervised-learning?newreg=8eae58509e344faf824deb6cd0b02d0d
+class PFA:
+    def __init__(self, n_features, q=None):
+        self.q = q
+        self.n_features = n_features
 
+    def fit(self, X):
+        if not self.q:
+            self.q = X.shape[1]
 
+        sc = StandardScaler()
+        X = sc.fit_transform(X)
+
+        pca = PCA(n_components=self.q).fit(X)
+        A_q = pca.components_.T
+
+        kmeans = KMeans(n_clusters=self.n_features).fit(A_q)
+        clusters = kmeans.predict(A_q)
+        cluster_centers = kmeans.cluster_centers_
+
+        dists = defaultdict(list)
+        for i, c in enumerate(clusters):
+            dist = euclidean_distances([A_q[i, :]], [cluster_centers[c, :]])[0][0]
+            dists[c].append((i, dist))
+
+        self.indices_ = [sorted(f, key=lambda x: x[1])[0][0] for f in dists.values()]
+        self.features_ = X[:, self.indices_]
+
+#Wrapper function for implementing fuzzywuzzy match with two pandas DFs https://stackoverflow.com/questions/13636848/is-it-possible-to-do-fuzzy-match-merge-with-python-pandas
+#May need to look into refactoring to speed things up, change scorer? standard strings?
+#To also look into implementing RapidFuzz instead.
+#Possiblly use a simpler approach to remove clear non-match records (i.e. only attempt match if at least one word in common)
+def fuzzy_merge(df_1, df_2, key1, key2, threshold=90, limit=1):
+    """
+    :param df_1: the left table to join
+    :param df_2: the right table to join
+    :param key1: key column of the left table
+    :param key2: key column of the right table
+    :param threshold: how close the matches should be to return a match, based on Levenshtein distance
+    :param limit: the amount of matches that will get returned, these are sorted high to low
+    :return: dataframe with boths keys and matches
+    """
+    s = df_2[key2].tolist()
+
+    m = df_1[key1].apply(lambda x: process.extract(x, s, limit=limit))    
+    df_1['matches'] = m
+
+    m2 = df_1['matches'].apply(lambda x: ', '.join([i[0] for i in x if i[1] >= threshold]))
+    df_1['matches'] = m2
+
+    return df_1
