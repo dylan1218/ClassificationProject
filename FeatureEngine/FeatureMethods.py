@@ -234,12 +234,15 @@ def fuzzy_merge(df_1, df_2, key1, key2, threshold=90, limit=1):
     :param limit: the amount of matches that will get returned, these are sorted high to low
     :return: dataframe with boths keys and matches
     """
-    s = df_2[key2].tolist()
+    lookupList = df_2[key2].tolist()
 
-    m = df_1[key1].apply(lambda x: process.extract(x, s, limit=limit))    
-    df_1['matches'] = m
+    matches = df_1[key1].apply(lambda x: process.extract(x, lookupList, limit=limit))    
 
-    m2 = df_1['matches'].apply(lambda x: ', '.join([i[0] for i in x if i[1] >= threshold]))
-    df_1['matches'] = m2
+
+    df_1['matches'] = matches
+
+    csvMatch = df_1['matches'].apply(lambda x: ', '.join([i[0] for i in x if i[1] >= threshold]))
+    
+    df_1['matches'] = csvMatch
 
     return df_1

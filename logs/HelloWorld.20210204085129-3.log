@@ -1,0 +1,118 @@
+2021-02-04 08:51:29,231 - teradata.udaexec - INFO - Initializing UdaExec...
+2021-02-04 08:51:29,232 - teradata.udaexec - INFO - Reading config files: ['c:\\etc\\udaexec.ini: Not Found', 'C:\\Users\\dylan.levine\\udaexec.ini: Not Found', 'c:\\Users\\dylan.levine\\Development\\HCP Classification\\HCP-Classification\\udaexec.ini: Not Found']
+2021-02-04 08:51:29,232 - teradata.udaexec - INFO - Found run number file: "c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\.runNumber"
+2021-02-04 08:51:29,232 - teradata.udaexec - INFO - Cleaning up log files older than 90 days.
+2021-02-04 08:51:29,232 - teradata.udaexec - INFO - Removed 0 log files.
+2021-02-04 08:51:29,488 - teradata.udaexec - INFO - Checkpoint file not found: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\HelloWorld.checkpoint
+2021-02-04 08:51:29,489 - teradata.udaexec - INFO - No previous checkpoint found, executing from beginning...
+2021-02-04 08:51:29,489 - teradata.udaexec - INFO - Execution Details:
+/********************************************************************************
+ * Application Name: HelloWorld
+ *          Version: 1.0
+ *       Run Number: 20210204085129-3
+ *             Host: AMUSORLLD308M63
+ *         Platform: Windows-10-10.0.18362-SP0
+ *          OS User: dylan.levine
+ *   Python Version: 3.6.12
+ *  Python Compiler: MSC v.1916 64 bit (AMD64)
+ *     Python Build: ('default', 'Sep  9 2020 00:29:25')
+ *  UdaExec Version: 15.10.0.21
+ *     Program Name: C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\ipykernel_launcher.py
+ *      Working Dir: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification
+ *      Git Version: git version 2.30.0.windows.2
+ *     Git Revision: 8024f4d
+ *        Git Dirty: True [ M .runNumber,?? logs/HelloWorld.20210204085129-3.log]
+ *          Log Dir: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs
+ *         Log File: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs\HelloWorld.20210204085129-3.log
+ *     Config Files: ['c:\\etc\\udaexec.ini: Not Found', 'C:\\Users\\dylan.levine\\udaexec.ini: Not Found', 'c:\\Users\\dylan.levine\\Development\\HCP Classification\\HCP-Classification\\udaexec.ini: Not Found']
+ *      Query Bands: ApplicationName=HelloWorld;Version=1.0;JobID=20210204085129-3;ClientUser=dylan.levine;Production=False;udaAppLogFile=c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs\HelloWorld.20210204085129-3.log;gitRevision=8024f4d;gitDirty=True;UtilityName=PyTd;UtilityVersion=15.10.0.21
+********************************************************************************/
+2021-02-04 08:51:29,489 - teradata.udaexec - INFO - Creating connection: {'method': 'odbc', 'system': 'EDWPROD.ONEABBOTT.COM', 'username': 'LEVINDM', 'password': 'XXXXXX'}
+2021-02-04 08:51:29,528 - teradata.tdodbc - INFO - Available drivers: SQL Server, Teradata Database ODBC Driver 16.20
+2021-02-04 08:51:30,797 - teradata.udaexec - ERROR - Unable to create connection: {'method': 'odbc', 'system': 'EDWPROD.ONEABBOTT.COM', 'username': 'LEVINDM', 'password': 'XXXXXX'}
+Traceback (most recent call last):
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\udaexec.py", line 183, in connect
+    **args))
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\tdodbc.py", line 454, in __init__
+    checkStatus(rc, hDbc=self.hDbc, method="SQLDriverConnectW")
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\tdodbc.py", line 231, in checkStatus
+    raise DatabaseError(i[2], u"[{}] {}".format(i[0], msg), i[0])
+teradata.api.DatabaseError: (210, '[28000] [Teradata][ODBC Teradata Driver][Teradata Database] (210) The UserId, Password or Account is invalid. FailCode = -8017')
+2021-02-04 08:51:51,924 - teradata.udaexec - INFO - Initializing UdaExec...
+2021-02-04 08:51:51,925 - teradata.udaexec - INFO - Reading config files: ['c:\\etc\\udaexec.ini: Not Found', 'C:\\Users\\dylan.levine\\udaexec.ini: Not Found', 'c:\\Users\\dylan.levine\\Development\\HCP Classification\\HCP-Classification\\udaexec.ini: Not Found']
+2021-02-04 08:51:51,925 - teradata.udaexec - INFO - Found run number file: "c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\.runNumber"
+2021-02-04 08:51:51,925 - teradata.udaexec - INFO - Cleaning up log files older than 90 days.
+2021-02-04 08:51:51,925 - teradata.udaexec - INFO - Removed 0 log files.
+2021-02-04 08:51:52,173 - teradata.udaexec - INFO - Checkpoint file not found: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\HelloWorld.checkpoint
+2021-02-04 08:51:52,174 - teradata.udaexec - INFO - No previous checkpoint found, executing from beginning...
+2021-02-04 08:51:52,174 - teradata.udaexec - INFO - Execution Details:
+/********************************************************************************
+ * Application Name: HelloWorld
+ *          Version: 1.0
+ *       Run Number: 20210204085151-4
+ *             Host: AMUSORLLD308M63
+ *         Platform: Windows-10-10.0.18362-SP0
+ *          OS User: dylan.levine
+ *   Python Version: 3.6.12
+ *  Python Compiler: MSC v.1916 64 bit (AMD64)
+ *     Python Build: ('default', 'Sep  9 2020 00:29:25')
+ *  UdaExec Version: 15.10.0.21
+ *     Program Name: C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\ipykernel_launcher.py
+ *      Working Dir: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification
+ *      Git Version: git version 2.30.0.windows.2
+ *     Git Revision: 8024f4d
+ *        Git Dirty: True [ M .runNumber,?? logs/HelloWorld.20210204085129-3.log,?? logs/HelloWorld.20210204085151-4.log]
+ *          Log Dir: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs
+ *         Log File: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs\HelloWorld.20210204085151-4.log
+ *     Config Files: ['c:\\etc\\udaexec.ini: Not Found', 'C:\\Users\\dylan.levine\\udaexec.ini: Not Found', 'c:\\Users\\dylan.levine\\Development\\HCP Classification\\HCP-Classification\\udaexec.ini: Not Found']
+ *      Query Bands: ApplicationName=HelloWorld;Version=1.0;JobID=20210204085151-4;ClientUser=dylan.levine;Production=False;udaAppLogFile=c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs\HelloWorld.20210204085151-4.log;gitRevision=8024f4d;gitDirty=True;UtilityName=PyTd;UtilityVersion=15.10.0.21
+********************************************************************************/
+2021-02-04 08:51:52,174 - teradata.udaexec - INFO - Creating connection: {'method': 'odbc', 'system': 'EDWPROD.ONEABBOTT.COM', 'username': 'LEVINDM', 'password': 'XXXXXX'}
+2021-02-04 08:51:52,808 - teradata.udaexec - ERROR - Unable to create connection: {'method': 'odbc', 'system': 'EDWPROD.ONEABBOTT.COM', 'username': 'LEVINDM', 'password': 'XXXXXX'}
+Traceback (most recent call last):
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\udaexec.py", line 183, in connect
+    **args))
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\tdodbc.py", line 454, in __init__
+    checkStatus(rc, hDbc=self.hDbc, method="SQLDriverConnectW")
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\tdodbc.py", line 231, in checkStatus
+    raise DatabaseError(i[2], u"[{}] {}".format(i[0], msg), i[0])
+teradata.api.DatabaseError: (210, '[28000] [Teradata][ODBC Teradata Driver][Teradata Database] (210) The UserId, Password or Account is invalid. FailCode = -8017')
+2021-02-04 08:55:46,589 - teradata.udaexec - INFO - Initializing UdaExec...
+2021-02-04 08:55:46,589 - teradata.udaexec - INFO - Reading config files: ['c:\\etc\\udaexec.ini: Not Found', 'C:\\Users\\dylan.levine\\udaexec.ini: Not Found', 'c:\\Users\\dylan.levine\\Development\\HCP Classification\\HCP-Classification\\udaexec.ini: Not Found']
+2021-02-04 08:55:46,589 - teradata.udaexec - INFO - Found run number file: "c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\.runNumber"
+2021-02-04 08:55:46,589 - teradata.udaexec - INFO - Cleaning up log files older than 90 days.
+2021-02-04 08:55:46,589 - teradata.udaexec - INFO - Removed 0 log files.
+2021-02-04 08:55:46,839 - teradata.udaexec - INFO - Checkpoint file not found: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\HelloWorld.checkpoint
+2021-02-04 08:55:46,839 - teradata.udaexec - INFO - No previous checkpoint found, executing from beginning...
+2021-02-04 08:55:46,840 - teradata.udaexec - INFO - Execution Details:
+/********************************************************************************
+ * Application Name: HelloWorld
+ *          Version: 1.0
+ *       Run Number: 20210204085546-5
+ *             Host: AMUSORLLD308M63
+ *         Platform: Windows-10-10.0.18362-SP0
+ *          OS User: dylan.levine
+ *   Python Version: 3.6.12
+ *  Python Compiler: MSC v.1916 64 bit (AMD64)
+ *     Python Build: ('default', 'Sep  9 2020 00:29:25')
+ *  UdaExec Version: 15.10.0.21
+ *     Program Name: C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\ipykernel_launcher.py
+ *      Working Dir: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification
+ *      Git Version: git version 2.30.0.windows.2
+ *     Git Revision: 8024f4d
+ *        Git Dirty: True [ M .runNumber,?? logs/HelloWorld.20210204085129-3.log,?? logs/HelloWorld.20210204085151-4.log,?? logs/HelloWorld.20210204085546-5.log]
+ *          Log Dir: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs
+ *         Log File: c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs\HelloWorld.20210204085546-5.log
+ *     Config Files: ['c:\\etc\\udaexec.ini: Not Found', 'C:\\Users\\dylan.levine\\udaexec.ini: Not Found', 'c:\\Users\\dylan.levine\\Development\\HCP Classification\\HCP-Classification\\udaexec.ini: Not Found']
+ *      Query Bands: ApplicationName=HelloWorld;Version=1.0;JobID=20210204085546-5;ClientUser=dylan.levine;Production=False;udaAppLogFile=c:\Users\dylan.levine\Development\HCP Classification\HCP-Classification\logs\HelloWorld.20210204085546-5.log;gitRevision=8024f4d;gitDirty=True;UtilityName=PyTd;UtilityVersion=15.10.0.21
+********************************************************************************/
+2021-02-04 08:55:46,840 - teradata.udaexec - INFO - Creating connection: {'method': 'odbc', 'system': 'EDWPROD.ONEABBOTT.COM', 'username': 'LEVINDM', 'password': 'XXXXXX', 'charset': 'UTF8'}
+2021-02-04 08:55:48,559 - teradata.udaexec - ERROR - Unable to create connection: {'method': 'odbc', 'system': 'EDWPROD.ONEABBOTT.COM', 'username': 'LEVINDM', 'password': 'XXXXXX', 'charset': 'UTF8'}
+Traceback (most recent call last):
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\udaexec.py", line 183, in connect
+    **args))
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\tdodbc.py", line 454, in __init__
+    checkStatus(rc, hDbc=self.hDbc, method="SQLDriverConnectW")
+  File "C:\Users\dylan.levine\.conda\envs\MLProjects\lib\site-packages\teradata\tdodbc.py", line 231, in checkStatus
+    raise DatabaseError(i[2], u"[{}] {}".format(i[0], msg), i[0])
+teradata.api.DatabaseError: (210, '[28000] [Teradata][ODBC Teradata Driver][Teradata Database] (210) The UserId, Password or Account is invalid. FailCode = -8017')
