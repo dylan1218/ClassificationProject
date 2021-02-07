@@ -12,6 +12,8 @@ from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.preprocessing import StandardScaler
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
+from sklearn.ensemble import IsolationForest
+from sklearn.model_selection import GridSearchCV
 
 '''
 Two approaches:
@@ -169,7 +171,6 @@ class FunctionFeaturizer:
 #def minmax():
 #    return preprocessing.MinMaxScaler()
 
-
 class FeatureEngine(FunctionFeaturizer):
     def __init__(self, df):
         FunctionFeaturizer.__init__(self, df)
@@ -189,6 +190,69 @@ class FeatureEngine(FunctionFeaturizer):
         self.dfscaled[self.dfscaled.columns] = self.scaler.inverse_transform(self.dfscaled[self.dfscaled.columns])
         return 
 
+
+#Class to process our various models, and score on metrics
+#Pass a feature object with methods?
+class Unsupervised_Analyzer:
+    #Features as a class level paramater or method paramaters? To think through what makes the most sense
+    def __init__(self, df):
+        self.df = df
+        self.models = dict()
+    
+    def set_features(self, features):
+        'Sets the features var as a class property'
+        self.features = features
+        return self
+
+    #Put autoencoder method here
+
+    def FitIsolationForest(self):
+        '''
+        Adds a grid searched IsolationForest model to models class property.
+        '''
+        #Isoloation forest scorer
+        def scorer_f(estimator, X):   #your own scorer
+            return np.mean(estimator.score_samples(X))
+        #Defined permutations
+        tuned = {
+            'n_estimators':[100], 
+            'max_samples':['auto'],
+            'contamination':['auto'], 
+            'max_features':[.85],
+            'bootstrap':[False],
+            'random_state':[None], 
+            'verbose':[0], 
+            'warm_start':[True], 
+            'random_state':[12345]
+            }  
+        
+        isolation_forest = GridSearchCV(IsolationForest(), tuned, scoring=scorer_f)
+        model = isolation_forest.fit(self.df[self.features].to_numpy())
+        
+        self.models['IsolationForest'] = model
+        
+        return self
+        #object.FitIsolationForest.models['IsolationForest'].predict('testvals')
+    
+    @property
+    def Models(self):
+    '''
+    Utilized to access the models dictionary as a chained method.
+    '''
+        return self.models
+
+    @property
+    def numpy_features(self):
+        '''
+        Returns a numpy array of the provided df and features.
+        Method should onyly be called after features are defined.
+        set_features(['feature 1', 'feature 2']).numpy_feature
+        '''
+        numpyarray = self.df[self.features].to_numpy()
+        return numpyarray
+
+
+        
 
 
 #Implementation of Principal Feature Analysis to help in identifying key features in an unsupervised learing context
@@ -219,6 +283,8 @@ class PFA:
 
         self.indices_ = [sorted(f, key=lambda x: x[1])[0][0] for f in dists.values()]
         self.features_ = X[:, self.indices_]
+
+
 
 #Wrapper function for implementing fuzzywuzzy match with two pandas DFs https://stackoverflow.com/questions/13636848/is-it-possible-to-do-fuzzy-match-merge-with-python-pandas
 #May need to look into refactoring to speed things up, change scorer? standard strings?
