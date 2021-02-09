@@ -26,3 +26,6 @@ VirtualModules/
 
 #local notes
 ModelsDL notes.ipynb
+
+#Dataset folder
+Datasets/
