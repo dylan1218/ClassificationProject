@@ -14,6 +14,11 @@ from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import GridSearchCV
+from pathlib import Path
+
+from AutoEncoderTrain.autoencoder import encoder, decoder, FitAutoEncoder
+from torch import autograd
+import torch
 
 '''
 Two approaches:
@@ -205,6 +210,41 @@ class Unsupervised_Analyzer:
         return self
 
     #Put autoencoder method here
+    def FitAutoEncoder(self):
+        #numpy array
+        pathBase = str(Path.cwd())
+
+        numpyarray = self.df[self.features].to_numpy()
+        
+        #Trains model for epochs designated in autoencoder.py
+        FitAutoEncoder(numpyarray)
+        
+        #training network classes / architectures from autoencoder.py
+        encoder_eval = encoder(numpyarray)
+        decoder_eval = decoder(numpyarray)
+
+
+        # restore pretrained model checkpoint
+        #integer in name represents epoch save point, select latest.
+        encoder_model_name = "ep_10_encoder_model.pth"
+        decoder_model_name = "ep_10_decoder_model.pth"
+
+
+        encoderSavePath = pathBase + "\\AutoEncoderDict\\" + encoder_model_name
+        decoderSavePath = pathBase + "\\AutoEncoderDict\\" + decoder_model_name
+
+        encoder_eval.load_state_dict(torch.load(encoderSavePath))
+        decoder_eval.load_state_dict(torch.load(decoderSavePath))
+
+        #Inserts trained encoding and ecoding models to the models object
+        self.models['AutoEncoder'] = {
+            "Encoder":encoder_eval,
+            "Decoder":decoder_eval
+            }
+
+        #data = autograd.Variable(torch.from_numpy(numpyarray).float())
+        
+        return self
 
     def FitIsolationForest(self):
         '''
@@ -236,9 +276,9 @@ class Unsupervised_Analyzer:
     
     @property
     def Models(self):
-    '''
-    Utilized to access the models dictionary as a chained method.
-    '''
+        '''
+        Utilized to access the models dictionary as a chained method.
+        '''
         return self.models
 
     @property
