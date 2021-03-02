@@ -15,6 +15,17 @@ from fuzzywuzzy import process
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import GridSearchCV
 from pathlib import Path
+from sklearn import svm #Import Support Vector Machine model
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.base import TransformerMixin, BaseEstimator
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+import itertools
+import scipy.stats as ss
+from xgboost.sklearn import XGBClassifier
+
 
 from AutoEncoderTrain.autoencoder import encoder, decoder, FitAutoEncoder
 from torch import autograd
@@ -75,6 +86,69 @@ The second approach will perform better with supervised learning.
 # a transformation based off of cos and sin function mapped to a circle, where cos = x val, and sin = y val.
 # http://blog.davidkaleko.com/feature-engineering-cyclical-features.html
 # https://datascience.stackexchange.com/questions/5990/what-is-a-good-way-to-transform-cyclic-ordinal-attributes
+
+
+class DateTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self,dateString,datetype):
+        self.datetype = datetype
+        self.dateString = dateString
+    
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, x):
+        if self.datetype == 'Hours':
+            hour_sin = np.sin(x[self.dateString].dt.hour*(2.*np.pi/24))
+            hour_cos = np.cos(x[self.dateString].dt.hour*(2.*np.pi/24))
+            return np.concat([day_sin, day_cos], axis=1)
+        #Days transform
+        if self.datetype == 'Days':
+            day_sin = np.sin(x[self.dateString].dt.dayofweek*(2.*np.pi/7))
+            day_cos = np.cos(x[self.dateString].dt.dayofweek*(2.*np.pi/7))
+            return pd.concat([day_sin, day_cos], axis=1)
+        #Weeks transform
+        if self.datetype == 'Weeks':
+            day_sin = np.sin(x[self.dateString].dt.week*(2.*np.pi/52))
+            day_cos = np.cos(x[self.dateString].dt.week*(2.*np.pi/52))
+            return pd.concat([day_sin, day_cos], axis=1)    
+        #Months transform
+        if self.datetype == 'Months':
+            month_sin = np.sin(x[self.dateString].dt.month-1*(2.*np.pi/12))
+            month_cos = np.cos(x[self.dateString].dt.month-1*(2.*np.pi/12))
+            return pd.concat([month_sin, month_cos], axis=1)
+        #Years thansform
+        if self.datetype == 'Years':
+            year = x[self.dateString].dt.year.to_frame()
+            return year
+        if self.datetype == 'WeekendBinary':
+            dfWkday = pd.DataFrame({'wkday':x[self.dateString].dt.dayofweek})
+            dfWkday.loc[(dfWkday.wkday == 5) | (dfWkday.wkday == 6), 'wkdayBinary'] = 1
+            dfWkday.loc[(dfWkday.wkday != 5) | (dfWkday.wkday != 6), 'wkdayBinary'] = 0
+            return dfWkday[['wkdayBinary']]
+        
+        if self.datetype == 'Days-INT':
+            return x[self.dateString].dt.dayofweek.to_frame()
+
+        if self.datetype == 'Weeks-INT':
+            return x[self.dateString].dt.week.to_frame()
+
+        if self.datetype == 'Months-INT':
+            return x[self.dateString].dt.month.to_frame()
+
+        #Utilized to represent linear movement in year (i.e. 2020 and 1/12, 2020 and 2/12, etc)
+        if self.datetype == 'Years-Months':
+            yearsmonths = x[self.dateString].dt.year + x[self.dateString].dt.month/12      
+            return yearsmonths
+    
+        if self.datetype == 'Months-Years':
+            years = x[self.dateString].dt.year
+            months = x[self.dateString].dt.month
+            dfMonthsYears = pd.DataFrame({'Years':years, 'Months':months})
+            dfMonthsYears['yearrank'] = dfMonthsYears.Years.rank(method='dense')
+            dfMonthsYears['yearrank'] = dfMonthsYears['yearrank'] - 1 #convert to 0 based rank
+            dfMonthsYears['AbsoluteYearScale'] = dfMonthsYears['yearrank']*12 + dfMonthsYears['Months']
+            dfMonthsYears['RelativeYearScale'] = dfMonthsYears['AbsoluteYearScale']/12
+            return dfMonthsYears[['RelativeYearScale']] 
 
 
 
@@ -198,6 +272,203 @@ class FeatureEngine(FunctionFeaturizer):
 
 #Class to process our various models, and score on metrics
 #Pass a feature object with methods?
+#Can we utilize inheritance to avoid duplication of methods between supervised and unsupervised analyzers?
+class Supervised_Analyzer:
+
+    def __init__(self,df):
+        self.df = df
+        self.models = dict()
+    
+    def set_features(self, features):
+        'Sets the features var as a class property'
+        self.features = features
+        return self #self for method chaining
+
+    def set_traintestsplit(self, target_field, test_split_size, modelTraining=True):
+        '''
+        Generates input and target array with a given target field name as string, and split size as float <1.
+        '''
+        #x, y and indices used to be to_numpy but now changed to be a df
+        x = self.df[self.features].loc[:, self.df[self.features].columns != target_field]
+        y = self.df[target_field]
+        indices = self.df.index
+
+        #https://stackoverflow.com/questions/35622396/getting-indices-while-using-train-test-split-in-scikit
+        #Due to shuffling Will need to retain index to reappend predictions to original test df 
+
+        if modelTraining == True:
+            x_train, x_test, y_train, y_test, indices_train, indices_test = train_test_split(x, y, indices, test_size=test_split_size, random_state=42)
+
+            self.df_test_y = y_test #need to rework this to be less costly        
+            self.df_test_x = x_test #need to rework this to be less costly
+            self.x_train = x_train
+            self.x_test = x_test
+            self.y_train = y_train
+            self.y_test = y_test
+            self.target_field = target_field
+            self.indices_train = indices_train
+            self.indices_test = indices_test
+        else:
+            self.df_test_y = y #need to rework this to be less costly        
+            self.df_test_x = x #need to rework this to be less costly
+            self.x_train = x
+            self.x_test = x
+            self.y_train = y
+
+        return self
+
+    def GetColumnTransformer(self):
+        '''
+        Method to set a column transformer as a class property.
+        Can be leveraged in single trained models for transforming features in future iterations.
+        '''
+        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP", "ACCNT_GRPV","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "Compliance_Bucket"]
+                
+        ct_x = ColumnTransformer(transformers=[
+            ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures),
+            ('Days', DateTransformer('DOC_DATE', 'Days-INT'), ['DOC_DATE']),
+            ('Months', DateTransformer('DOC_DATE', 'Months-INT'), ['DOC_DATE']),
+            ('Weeks', DateTransformer('DOC_DATE', 'Weeks-INT'), ['DOC_DATE']),
+            ('WKEnds', DateTransformer('DOC_DATE', 'WeekendBinary'), ['DOC_DATE']),
+            ], 
+            remainder='passthrough')
+        
+        ct_fit_x = ct_x.fit(self.x_train)
+
+        self.x_transformer = ct_fit_x
+        return self
+
+    def transformFeatures(self):
+        '''
+        Transforms df_test/df_train and sets transformed train and test properties
+        '''
+        
+        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP", "ACCNT_GRPV","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY"]
+
+        ct_x = ColumnTransformer(transformers=[
+            ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures),
+            ('Days', DateTransformer('DOC_DATE', 'Days-INT'), ['DOC_DATE']),
+            ('Months', DateTransformer('DOC_DATE', 'Months-INT'), ['DOC_DATE']),
+            ('Weeks', DateTransformer('DOC_DATE', 'Weeks-INT'), ['DOC_DATE']),
+            ('WKEnds', DateTransformer('DOC_DATE', 'WeekendBinary'), ['DOC_DATE']),
+            ], 
+            remainder='passthrough')
+
+        ct_fit_x = ct_x.fit(self.x_train)
+
+        #Checks if a transformer already exists, which would be true if pretrained model
+        if hasattr(self, 'x_transformer'):
+            #transform f(x) dataframes to a working numpy format for input into models 
+            x_train = self.x_transformer.transform(self.x_train)
+            x_test = self.x_transformer.transform(self.x_test)
+
+        else:
+            x_train = ct_fit_x.transform(self.x_train)
+            x_test = ct_fit_x.transform(self.x_test)  
+
+        
+        #transform y dataframe to a working numpy format for input into models
+        #Only need y numpy for model training
+        
+        y_train = self.y_train.to_numpy()
+
+        #set as properties to object
+        self.x_train = x_train
+        self.x_test = x_test
+        self.y_train = y_train
+
+        return self
+
+    @property #decorator to access method as property
+    def Models(self):
+        '''
+        Utilized to access the models dictionary as a chained method.
+        '''
+        return self.models
+
+    @property
+    def numpy_features(self):
+        '''
+        Returns a numpy array of the provided df and features.
+        Method should onyly be called after features are defined.
+        set_features(['feature 1', 'feature 2']).numpy_feature
+        '''
+        numpyarray = self.df[self.features].to_numpy()
+        return numpyarray
+
+
+    def FitSVM(self):
+        '''
+        tuned = [
+                {'kernel':['rbf'], 'gamma': ['scale'], 'C': [1]},
+                {'kernel': ['linear'], 'C': [1]}
+                ]
+        '''
+        tuned = {'kernel': ['linear'], 'C': [1]}
+        #Nested cross validation
+        cv = StratifiedKFold(n_splits=5, random_state=42, shuffle=True)
+        SVM = GridSearchCV(svm.SVC(), param_grid=tuned, cv=None, n_jobs=-1, verbose=3)
+        model = SVM.fit(self.x_train, self.y_train) #self.df[self.features].to_numpy())
+
+        ##instance of gridsearch model is returned from models dict https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
+        self.models['SVM'] = {
+            "GSCV":SVM
+            }
+        
+
+        return self #self for method chaining
+
+    def FitKNeighbors(self):
+        neighbors = np.arange(10) #array from 0 to 9
+
+        tuned = {
+                'n_neighbors':[5],
+                'weights':['uniform', 'distance'], 
+                'algorithm': ['auto']
+                }
+        #Nested cross validation
+        cv = StratifiedKFold(n_splits=5, random_state=42, shuffle=True)
+        KN = GridSearchCV(KNeighborsClassifier(), param_grid=tuned, cv=cv, n_jobs=-1, verbose=3)
+        model = KN.fit(self.x_train, self.y_train) #self.df[self.features].to_numpy())
+
+        ##instance of gridsearch model is returned from models dict https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
+        self.models['KNeighbors'] = {
+            "GSCV":KN
+            }
+        return self #self for method chaining
+
+    def FitXGBOOST(self, splits=4):
+        parameters = {
+                    'booster':['gbtree'], #gblinear alternative model, and gbtree original (maybe fit linear regressor?)
+                    'nthread':[-1], #when use hyperthread, xgboost may become slower
+                    'objective':['binary:logistic'],
+                    'learning_rate': [.01], #so called `eta` value
+                    'max_depth': [5],
+                    'min_child_weight': [1],
+                    'verbosity': [0],
+                    'subsample': [0.7],
+                    'colsample_bytree': [0.7],
+                    'n_estimators': [1000],
+                    'use_label_encoder':[True]
+                    #'early_stopping_rounds':[20]
+                    }
+        
+        cv = StratifiedKFold(n_splits=splits, random_state=42, shuffle=True)
+        XGB = GridSearchCV(XGBClassifier(),param_grid=parameters,cv=cv, n_jobs=1)
+        XGB.fit(self.x_train, self.y_train)
+
+        #**kwargs to pass list of best_params
+        XGBModel = XGBClassifier(**XGB.best_params_)
+        XGB = XGBModel.fit(self.x_train, self.y_train)
+
+        self.models['XGB'] = {
+            "GSCV":XGB
+            }
+
+        return self
+
+
+
 class Unsupervised_Analyzer:
     #Features as a class level paramater or method paramaters? To think through what makes the most sense
     def __init__(self, df):
@@ -352,3 +623,56 @@ def fuzzy_merge(df_1, df_2, key1, key2, threshold=90, limit=1):
     df_1['matches'] = csvMatch
 
     return df_1
+
+
+def GenerateCramersVMatrix(df, categoricalFeatures):
+
+
+    #Returns an iterable of combination of categorical features
+    fieldPairs = list(itertools.combinations(categoricalFeatures, r=2))
+
+    #Sets three arrays with len of combination array for input into pd.DataFrame
+    name1 = np.zeros((len(fieldPairs)), dtype = object) #dtype as object replaces interger 0's as string type
+    name2 = np.zeros((len(fieldPairs)), dtype = object)
+    corr = np.zeros((len(fieldPairs)), dtype = object)
+
+    
+    #https://stackoverflow.com/questions/20892799/using-pandas-calculate-cram%C3%A9rs-coefficient-matrix
+    def cramers_corrected_stat(confusion_matrix):
+        """ calculate Cramers V statistic for categorial-categorial association.
+            uses correction from Bergsma and Wicher, 
+            Journal of the Korean Statistical Society 42 (2013): 323-328
+        """
+        chi2 = ss.chi2_contingency(confusion_matrix)[0]
+        n = confusion_matrix.sum().sum()
+        phi2 = chi2/n
+        r,k = confusion_matrix.shape
+        phi2corr = max(0, phi2 - ((k-1)*(r-1))/(n-1))    
+        rcorr = r - ((r-1)**2)/(n-1)
+        kcorr = k - ((k-1)**2)/(n-1)
+        return np.sqrt(phi2corr / min( (kcorr-1), (rcorr-1)))
+
+    #Populate arrays for input into pd.DataFrame
+    count = 0
+    for pair in fieldPairs:
+        cramers = cramers_corrected_stat( pd.crosstab(df[pair[0]],df[pair[1]]))
+        name1[count] = pair[0]
+        name2[count] = pair[1]
+        corr[count] = cramers
+        count += 1
+
+
+    coorDF = pd.DataFrame({"name":name1.tolist(),"name2":name2.tolist(), "coor":corr.tolist()})
+
+    #Transforms dataframe into a coorelation matrix. Transformation code leveraged from below: 
+    pivot = coorDF.pivot(*coorDF)
+    coorMatrix = pivot.add(pivot.T, fill_value=0).fillna(1)
+
+    #For single pair
+    '''
+    confusion_matrix = pd.crosstab(modelVals.df['HCPWord'], modelVals.df['MATL_GROUP'])
+    print("HCP-MATL_GROUP: " + str(cramers_corrected_stat(confusion_matrix)))
+    '''
+
+    
+    return coorMatrix
