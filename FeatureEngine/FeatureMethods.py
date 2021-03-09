@@ -25,11 +25,14 @@ from sklearn.preprocessing import OneHotEncoder
 import itertools
 import scipy.stats as ss
 from xgboost.sklearn import XGBClassifier
-
-
 from AutoEncoderTrain.autoencoder import encoder, decoder, FitAutoEncoder
 from torch import autograd
 import torch
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+
+pathBase = str(Path.cwd())
+
 
 '''
 Two approaches:
@@ -322,10 +325,14 @@ class Supervised_Analyzer:
         Method to set a column transformer as a class property.
         Can be leveraged in single trained models for transforming features in future iterations.
         '''
-        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP", "ACCNT_GRPV","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "Compliance_Bucket"]
+        #Terriblly exepensive method. This should instead be a getter @property method, and should set property on transformFeatures method
+        stop_words = [bytes(x.strip(), 'utf-8') for x in open(pathBase + "\Datasets\stopwords.txt",'r').read().split('\n')]
+        #To consider dropping one of the ACCNT_GRPV labels as they are perfectly coorelated (i.e. text description vs. a code)
+        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP", "ACCNT_GRPV","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "DateEqual", "Compliance_Bucket"]
                 
         ct_x = ColumnTransformer(transformers=[
             ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures),
+            ('textvector', TfidfVectorizer(stop_words = stop_words, token_pattern='[^\s]*(hosp|medic|health|poly|farma|pharma|dent|clinic|nutri|pedia|drug|lab|neuro|dr |dr.|nurse|doctor|physic|practic|state |federal |govt |government|dept |department|county)[^\s]*', max_features=30),'textappend'),
             ('Days', DateTransformer('DOC_DATE', 'Days-INT'), ['DOC_DATE']),
             ('Months', DateTransformer('DOC_DATE', 'Months-INT'), ['DOC_DATE']),
             ('Weeks', DateTransformer('DOC_DATE', 'Weeks-INT'), ['DOC_DATE']),
@@ -342,11 +349,12 @@ class Supervised_Analyzer:
         '''
         Transforms df_test/df_train and sets transformed train and test properties
         '''
-        
-        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP", "ACCNT_GRPV","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY"]
+        stop_words = [bytes(x.strip(), 'utf-8') for x in open(pathBase + "\Datasets\stopwords.txt",'r').read().split('\n')]
+        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP", "ACCNT_GRPV","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "DateEqual", "Compliance_Bucket"]
 
         ct_x = ColumnTransformer(transformers=[
             ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures),
+            ('textvector', TfidfVectorizer(stop_words = stop_words, token_pattern='[^\s]*(hosp|medic|health|poly|farma|pharma|dent|clinic|nutri|pedia|drug|lab|neuro|dr|nurse|doctor|physic|practic|state |federal |govt |government|dept |Department|county)[^\s]*', max_features=30),'textappend'),
             ('Days', DateTransformer('DOC_DATE', 'Days-INT'), ['DOC_DATE']),
             ('Months', DateTransformer('DOC_DATE', 'Months-INT'), ['DOC_DATE']),
             ('Weeks', DateTransformer('DOC_DATE', 'Weeks-INT'), ['DOC_DATE']),
@@ -437,28 +445,30 @@ class Supervised_Analyzer:
             }
         return self #self for method chaining
 
-    def FitXGBOOST(self, splits=4):
+    def FitXGBOOST(self, splits=2):
         parameters = {
                     'booster':['gbtree'], #gblinear alternative model, and gbtree original (maybe fit linear regressor?)
                     'nthread':[-1], #when use hyperthread, xgboost may become slower
                     'objective':['binary:logistic'],
-                    'learning_rate': [.01], #so called `eta` value
-                    'max_depth': [5],
+                    'learning_rate': [0.1], #so called `eta` value, want to do .1, .01, and .05
+                    'max_depth': [5], #Want to do 3,5,7
                     'min_child_weight': [1],
                     'verbosity': [0],
-                    'subsample': [0.7],
+                    'subsample': [0.8], #Want to do .8 and .9
                     'colsample_bytree': [0.7],
-                    'n_estimators': [1000],
+                    'n_estimators': [100, 250], #Want to do 100, 250, 500, and 1000
                     'use_label_encoder':[True]
                     #'early_stopping_rounds':[20]
                     }
         
         cv = StratifiedKFold(n_splits=splits, random_state=42, shuffle=True)
-        XGB = GridSearchCV(XGBClassifier(),param_grid=parameters,cv=cv, n_jobs=1)
+        print("----Running grid search optimization----")
+        XGB = GridSearchCV(XGBClassifier(),param_grid=parameters,cv=cv, n_jobs=1, verbose=3)
         XGB.fit(self.x_train, self.y_train)
 
         #**kwargs to pass list of best_params
         XGBModel = XGBClassifier(**XGB.best_params_)
+        print("----Running final model fit----")
         XGB = XGBModel.fit(self.x_train, self.y_train)
 
         self.models['XGB'] = {
