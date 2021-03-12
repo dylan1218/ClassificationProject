@@ -287,9 +287,10 @@ class Supervised_Analyzer:
         self.features = features
         return self #self for method chaining
 
-    def set_traintestsplit(self, target_field, test_split_size, modelTraining=True):
+    def set_traintestsplit(self, target_field, test_split_size, modelTraining=True, imbalancedSampling=False):
         '''
         Generates input and target array with a given target field name as string, and split size as float <1.
+        imbalancedSampling var used to hanlde imbalnced classifications
         '''
         #x, y and indices used to be to_numpy but now changed to be a df
         x = self.df[self.features].loc[:, self.df[self.features].columns != target_field]
@@ -328,15 +329,15 @@ class Supervised_Analyzer:
         #Terriblly exepensive method. This should instead be a getter @property method, and should set property on transformFeatures method
         stop_words = [bytes(x.strip(), 'utf-8') for x in open(pathBase + "\Datasets\stopwords.txt",'r').read().split('\n')]
         #To consider dropping one of the ACCNT_GRPV labels as they are perfectly coorelated (i.e. text description vs. a code)
-        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP", "ACCNT_GRPV","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "DateEqual", "Compliance_Bucket"]
+        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "DateEqual", "Compliance_Bucket"]
                 
         ct_x = ColumnTransformer(transformers=[
-            ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures),
-            ('textvector', TfidfVectorizer(stop_words = stop_words, token_pattern='[^\s]*(hosp|medic|health|poly|farma|pharma|dent|clinic|nutri|pedia|drug|lab|neuro|dr |dr.|nurse|doctor|physic|practic|state |federal |govt |government|dept |department|county)[^\s]*', max_features=30),'textappend'),
-            ('Days', DateTransformer('DOC_DATE', 'Days-INT'), ['DOC_DATE']),
-            ('Months', DateTransformer('DOC_DATE', 'Months-INT'), ['DOC_DATE']),
-            ('Weeks', DateTransformer('DOC_DATE', 'Weeks-INT'), ['DOC_DATE']),
-            ('WKEnds', DateTransformer('DOC_DATE', 'WeekendBinary'), ['DOC_DATE']),
+            ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures)
+            #('textvector', TfidfVectorizer(stop_words = stop_words, token_pattern='[^\s]*(hosp|medic|health|poly|farma|pharma|dent|clinic|nutri|pedia|drug|lab|neuro|dr |dr.|nurse|doctor|physic|practic|state |federal |govt |government|dept |department|county)[^\s]*', max_features=30),'textappend'),
+            #('Days', DateTransformer('DOC_DATE', 'Days-INT'), ['DOC_DATE']),
+            #('Months', DateTransformer('DOC_DATE', 'Months-INT'), ['DOC_DATE']),
+            #('Weeks', DateTransformer('DOC_DATE', 'Weeks-INT'), ['DOC_DATE']),
+            #('WKEnds', DateTransformer('DOC_DATE', 'WeekendBinary'), ['DOC_DATE']),
             ], 
             remainder='passthrough')
         
@@ -350,15 +351,15 @@ class Supervised_Analyzer:
         Transforms df_test/df_train and sets transformed train and test properties
         '''
         stop_words = [bytes(x.strip(), 'utf-8') for x in open(pathBase + "\Datasets\stopwords.txt",'r').read().split('\n')]
-        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP", "ACCNT_GRPV","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "DateEqual", "Compliance_Bucket"]
+        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "DateEqual", "Compliance_Bucket"]
 
         ct_x = ColumnTransformer(transformers=[
-            ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures),
-            ('textvector', TfidfVectorizer(stop_words = stop_words, token_pattern='[^\s]*(hosp|medic|health|poly|farma|pharma|dent|clinic|nutri|pedia|drug|lab|neuro|dr|nurse|doctor|physic|practic|state |federal |govt |government|dept |Department|county)[^\s]*', max_features=30),'textappend'),
-            ('Days', DateTransformer('DOC_DATE', 'Days-INT'), ['DOC_DATE']),
-            ('Months', DateTransformer('DOC_DATE', 'Months-INT'), ['DOC_DATE']),
-            ('Weeks', DateTransformer('DOC_DATE', 'Weeks-INT'), ['DOC_DATE']),
-            ('WKEnds', DateTransformer('DOC_DATE', 'WeekendBinary'), ['DOC_DATE']),
+            ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures)
+            #('textvector', TfidfVectorizer(stop_words = stop_words, token_pattern='[^\s]*(hosp|medic|health|poly|farma|pharma|dent|clinic|nutri|pedia|drug|lab|neuro|dr|nurse|doctor|physic|practic|state |federal |govt |government|dept |Department|county)[^\s]*', max_features=30),'textappend'),
+            #('Days', DateTransformer('DOC_DATE', 'Days-INT'), ['DOC_DATE']),
+            #('Months', DateTransformer('DOC_DATE', 'Months-INT'), ['DOC_DATE']),
+            #('Weeks', DateTransformer('DOC_DATE', 'Weeks-INT'), ['DOC_DATE']),
+            #('WKEnds', DateTransformer('DOC_DATE', 'WeekendBinary'), ['DOC_DATE']),
             ], 
             remainder='passthrough')
 
@@ -454,11 +455,11 @@ class Supervised_Analyzer:
                     'max_depth': [5], #Want to do 3,5,7
                     'min_child_weight': [1],
                     'verbosity': [0],
-                    'subsample': [0.8], #Want to do .8 and .9
-                    'colsample_bytree': [0.7],
-                    'n_estimators': [100, 250], #Want to do 100, 250, 500, and 1000
-                    'use_label_encoder':[True]
-                    #'early_stopping_rounds':[20]
+                    'subsample': [0.9], #Want to do .8 and .9
+                    'colsample_bytree': [0.9],
+                    'n_estimators': [1000], #Want to do 100, 250, 500, and 1000
+                    'use_label_encoder':[True],
+                    'early_stopping_rounds':[50]
                     }
         
         cv = StratifiedKFold(n_splits=splits, random_state=42, shuffle=True)
