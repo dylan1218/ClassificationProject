@@ -459,7 +459,8 @@ class Supervised_Analyzer:
                     'colsample_bytree': [0.9],
                     'n_estimators': [1000], #Want to do 100, 250, 500, and 1000
                     'use_label_encoder':[True],
-                    'early_stopping_rounds':[50]
+                    'early_stopping_rounds':[50],
+                    'scale_pos_weight':[.1]
                     }
         
         cv = StratifiedKFold(n_splits=splits, random_state=42, shuffle=True)
