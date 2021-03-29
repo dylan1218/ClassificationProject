@@ -29,6 +29,8 @@ from AutoEncoderTrain.autoencoder import encoder, decoder, FitAutoEncoder
 from torch import autograd
 import torch
 from sklearn.feature_extraction.text import TfidfVectorizer
+from math import sqrt
+from sklearn.feature_selection import RFECV
 
 
 pathBase = str(Path.cwd())
@@ -282,9 +284,21 @@ class Supervised_Analyzer:
         self.df = df
         self.models = dict()
     
+    def __filterFieldDict(self, dictObj, callback):
+        # Iterate over all the items in dictionary
+        fieldList = []
+        for (key, value) in dictObj.items():
+            # Check if item satisfies the given condition then add to new dict
+            if callback((key, value)):
+                fieldList.append(key)
+        return fieldList
+
     def set_features(self, features):
         'Sets the features var as a class property'
-        self.features = features
+        self.featureDict = features
+        self.features = self.__filterFieldDict(self.featureDict, lambda elem: elem[1] != 'ALL')
+        self.oneHotFeatures = self.__filterFieldDict(self.featureDict, lambda elem: elem[1] == '1hot')
+        self.passThroughFeatures = self.__filterFieldDict(self.featureDict, lambda elem: elem[1] == 'Passthrough_Transform')
         return self #self for method chaining
 
     def set_traintestsplit(self, target_field, test_split_size, modelTraining=True, imbalancedSampling=False):
@@ -308,6 +322,7 @@ class Supervised_Analyzer:
             self.x_train = x_train
             self.x_test = x_test
             self.y_train = y_train
+            self.y_train_imbalanced = y_train #need to rework this to be less costly
             self.y_test = y_test
             self.target_field = target_field
             self.indices_train = indices_train
@@ -329,7 +344,7 @@ class Supervised_Analyzer:
         #Terriblly exepensive method. This should instead be a getter @property method, and should set property on transformFeatures method
         stop_words = [bytes(x.strip(), 'utf-8') for x in open(pathBase + "\Datasets\stopwords.txt",'r').read().split('\n')]
         #To consider dropping one of the ACCNT_GRPV labels as they are perfectly coorelated (i.e. text description vs. a code)
-        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "DateEqual", "Compliance_Bucket"]
+        oneHotFeatures = self.oneHotFeatures
                 
         ct_x = ColumnTransformer(transformers=[
             ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures)
@@ -351,7 +366,7 @@ class Supervised_Analyzer:
         Transforms df_test/df_train and sets transformed train and test properties
         '''
         stop_words = [bytes(x.strip(), 'utf-8') for x in open(pathBase + "\Datasets\stopwords.txt",'r').read().split('\n')]
-        oneHotFeatures = ["PROFIT_CTR","AC_DOC_TYP","POST_KEY","GL_ACCOUNT","ZTCODE", "MATL_GROUP","V.BI_ACCNT_TGRPV", "V.BIC_ZTERMPAY", "DateEqual", "Compliance_Bucket"]
+        oneHotFeatures = self.oneHotFeatures
 
         ct_x = ColumnTransformer(transformers=[
             ('1hot', OneHotEncoder(handle_unknown='ignore',sparse=False), oneHotFeatures)
@@ -447,6 +462,9 @@ class Supervised_Analyzer:
         return self #self for method chaining
 
     def FitXGBOOST(self, splits=2):
+        #imbalancedScaled = self.y_train_imbalanced.value_counts()['Non-Compliance'] / self.y_train_imbalanced.value_counts()['Compliance']
+        imbalancedScaledReverse = self.y_train_imbalanced.value_counts()['Compliance'] / self.y_train_imbalanced.value_counts()['Non-Compliance']
+
         parameters = {
                     'booster':['gbtree'], #gblinear alternative model, and gbtree original (maybe fit linear regressor?)
                     'nthread':[-1], #when use hyperthread, xgboost may become slower
@@ -457,10 +475,11 @@ class Supervised_Analyzer:
                     'verbosity': [0],
                     'subsample': [0.9], #Want to do .8 and .9
                     'colsample_bytree': [0.9],
-                    'n_estimators': [1000], #Want to do 100, 250, 500, and 1000
+                    'n_estimators': [500, 1000], #Want to do 100, 250, 500, and 1000
                     'use_label_encoder':[True],
                     'early_stopping_rounds':[50],
-                    'scale_pos_weight':[.1]
+                    'scale_pos_weight':[imbalancedScaledReverse],
+                    'tree_method':['hist']
                     }
         
         cv = StratifiedKFold(n_splits=splits, random_state=42, shuffle=True)
