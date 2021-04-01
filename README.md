@@ -1,5 +1,4 @@
-# HCP-Classification
-
+# XGBoost and SVM classification of records
 
 
 
